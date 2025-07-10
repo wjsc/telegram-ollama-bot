@@ -2,46 +2,43 @@ const TelegramBot = require('node-telegram-bot-api');
 const { Ollama } = require('ollama') 
 const ollama = new Ollama({host: 'http://127.0.0.1:11434'})
 
-// replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
-// Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
 
-// Matches "/echo [whatever]"
 bot.onText(/\/echo (.+)/, (msg, match) => {
-  // 'msg' is the received Message from Telegram
-  // 'match' is the result of executing the regexp above on the text content
-  // of the message
-
   const chatId = msg.chat.id;
-  const resp = match[1]; // the captured "whatever"
-
-  
-  // send back the matched "whatever" to the chat
+  const resp = match[1];
   bot.sendMessage(chatId, resp);
 });
 
-// Listen for any kind of message. There are different kinds of
-// messages.
+const memory = new Map()
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   
+  const newPrompt = [
+    { 
+        role: 'system',
+        content: 'Sos un bot de telegram que enseña a hablar portugues. Habla estrictamente idioma portugues de Brasil y ningun otro idioma. Si el usuario comete un error, corregir al usuario sin excepción.'
+    },
+    {
+        role: 'user',
+        content: msg.text
+    }
+  ]
+
+  const response = await ollama.chat({
+    model: 'qwen2.5-coder:7b-instruct',
+    messages: [
+      ...(memory.get(msg.chat.id) || []),
+      ...newPrompt            
+    ],
+  })
   
-   const response = await ollama.chat({
-            model: 'qwen2.5-coder:7b-instruct',
-            messages: [
-                { 
-                    role: 'system',
-                    content: 'Sos un bot de telegram que siempre intenta hacer chistes'
-                },
-                {
-                    role: 'user',
-                    content: msg.text
-                }
-            
-            ],
-        })
+  memory.set(msg.chat.id, [
+    ...(memory.get(msg.chat.id) || []),
+    ...newPrompt
+  ].slice(-10) )
 
   bot.sendMessage(chatId, response.message.content);
 });
