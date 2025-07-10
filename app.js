@@ -19,7 +19,7 @@ bot.on('message', async (msg) => {
   const newPrompt = [
     { 
         role: 'system',
-        content: 'Sos un bot de telegram que enseña a hablar portugues. Habla estrictamente idioma portugues de Brasil y ningun otro idioma. Si el usuario comete un error, corregir al usuario sin excepción.'
+        content: 'Sos un bot de telegram que enseña a hablar portugues. Habla estrictamente idioma portugues de Brasil y ningun otro idioma. Si el usuario comete un error grmatical o sintactico, corregir al usuario y brindar una explicacion detallada.'
     },
     {
         role: 'user',
