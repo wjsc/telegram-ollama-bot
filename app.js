@@ -1,37 +1,47 @@
-import { TelegramClient } from "telegram";
-import { StringSession } from "telegram/sessions";
-import readline from "readline";
+const TelegramBot = require('node-telegram-bot-api');
+const { Ollama } = require('ollama') 
+const ollama = new Ollama({host: 'http://127.0.0.1:11434'})
 
-const apiId = process.env.API_ID;
-const apiHash = process.env.API_HASH;
-const stringSession = new StringSession(""); // fill this later with the value from session.save()
+// replace the value below with the Telegram token you receive from @BotFather
+const token = process.env.TELEGRAM_BOT_TOKEN;
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+// Create a bot that uses 'polling' to fetch new updates
+const bot = new TelegramBot(token, {polling: true});
+
+// Matches "/echo [whatever]"
+bot.onText(/\/echo (.+)/, (msg, match) => {
+  // 'msg' is the received Message from Telegram
+  // 'match' is the result of executing the regexp above on the text content
+  // of the message
+
+  const chatId = msg.chat.id;
+  const resp = match[1]; // the captured "whatever"
+
+  
+  // send back the matched "whatever" to the chat
+  bot.sendMessage(chatId, resp);
 });
 
-(async () => {
-  console.log("Loading interactive example...");
-  const client = new TelegramClient(stringSession, apiId, apiHash, {
-    connectionRetries: 5,
-  });
-  await client.start({
-    phoneNumber: async () =>
-      new Promise((resolve) =>
-        rl.question("Please enter your number: ", resolve)
-      ),
-    password: async () =>
-      new Promise((resolve) =>
-        rl.question("Please enter your password: ", resolve)
-      ),
-    phoneCode: async () =>
-      new Promise((resolve) =>
-        rl.question("Please enter the code you received: ", resolve)
-      ),
-    onError: (err) => console.log(err),
-  });
-  console.log("You should now be connected.");
-  console.log(client.session.save()); // Save this string to avoid logging in again
-  await client.sendMessage("me", { message: "Hello!" });
-})();
+// Listen for any kind of message. There are different kinds of
+// messages.
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  
+  
+   const response = await ollama.chat({
+            model: 'qwen2.5-coder:7b-instruct',
+            messages: [
+                { 
+                    role: 'system',
+                    content: 'Sos un bot de telegram que siempre intenta hacer chistes'
+                },
+                {
+                    role: 'user',
+                    content: msg.text
+                }
+            
+            ],
+        })
+
+  bot.sendMessage(chatId, response.message.content);
+});
