@@ -19,8 +19,8 @@ A Telegram bot powered by Ollama that provides AI assistance with conversation m
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd telegram-interface
+git clone git@github.com:wjsc/telegram-ollama-bot.git
+cd /telegram-ollama-bot
 ```
 
 2. Install dependencies:
